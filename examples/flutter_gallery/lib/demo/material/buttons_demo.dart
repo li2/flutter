@@ -3,6 +3,8 @@
 // found in the LICENSE file.
 
 import 'package:flutter/material.dart';
+import 'package:flutter_gallery/wy/widgets/LoadingButton.dart';
+import 'package:toast/toast.dart';
 
 import '../../gallery/demo.dart';
 
@@ -44,6 +46,10 @@ const String _actionText =
     'point.';
 
 const String _actionCode = 'buttons_action';
+
+const String _loadingText = 'State Button inlcues idle, loading, disabled states.';
+
+const String _loadingCode = 'buttons_loading';
 
 class ButtonsDemo extends StatefulWidget {
   static const String routeName = '/material/buttons';
@@ -112,6 +118,12 @@ class _ButtonsDemoState extends State<ButtonsDemo> {
         demoWidget: buildActionButton(),
         exampleCodeTag: _actionCode,
         documentationUrl: 'https://docs.flutter.io/flutter/material/FloatingActionButton-class.html',
+      ),
+      ComponentDemoTabData(
+        tabName: 'LOADING',
+        description: _loadingText,
+        demoWidget: buildLoadingButton(),
+        exampleCodeTag: _loadingCode,
       ),
     ];
 
@@ -380,6 +392,45 @@ class _ButtonsDemoState extends State<ButtonsDemo> {
           // Perform some action
         },
         tooltip: 'floating action button',
+      ),
+    );
+  }
+
+  /// Loading Button ///////////////////////////////////////////////////////////
+
+  LoadingButtonState _loadingButtonState = LoadingButtonState.IDLE;
+  void _setButtonState(LoadingButtonState state) {
+    setState(() {
+      _loadingButtonState = state;
+    });
+  }
+
+  Widget buildLoadingButton() {
+    return Align(
+      alignment: const Alignment(0.0, -0.2),
+      child: Row(
+        mainAxisSize: MainAxisSize.max,
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: <Widget>[
+          RaisedButton(child: const Text('Idle'), onPressed: () {
+            _setButtonState(LoadingButtonState.IDLE);
+          }),
+          RaisedButton(child: const Text('Loading'), onPressed: () {
+            _setButtonState(LoadingButtonState.LOADING);
+          }),
+          RaisedButton(child: const Text('Disabled'), onPressed: () {
+            _setButtonState(LoadingButtonState.DISABLED);
+          }),
+          LoadingButton(
+            state: _loadingButtonState,
+            textColor: Colors.white,
+            text: 'Next',
+            backgroundColor: Colors.orange,
+            progressColor: Colors.orange,
+            onPressed: () {
+              Toast.show('onNextPressed', context);
+            }),
+        ],
       ),
     );
   }
