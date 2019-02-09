@@ -3,6 +3,7 @@
 // found in the LICENSE file.
 
 import 'package:flutter/material.dart';
+import 'package:flutter_gallery/wy/studio/charts_demo.dart';
 
 import '../demo/all.dart';
 import 'icons.dart';
@@ -110,6 +111,14 @@ List<GalleryDemo> _buildGalleryDemos() {
       category: _kDemos,
       routeName: AnimationDemo.routeName,
       buildRoute: (BuildContext context) => const AnimationDemo(),
+    ),
+    GalleryDemo(
+      title: 'Charts',
+      subtitle: 'Material Design data visualization library',
+      icon: Icons.show_chart,
+      category: _kDemos,
+      routeName: ChartDemo.routeName,
+      buildRoute: (BuildContext context) => const ChartDemo(),
     ),
 
     // Style

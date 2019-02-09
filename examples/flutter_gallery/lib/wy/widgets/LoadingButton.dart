@@ -1,9 +1,12 @@
+// Weiyi.Li 2019-02-06
+
 import 'package:flutter/material.dart';
 
 enum LoadingButtonState {
   IDLE, LOADING, DISABLED
 }
 
+/// A button which support 3 states: idle, loading , disabled.
 class LoadingButton extends StatelessWidget {
   const LoadingButton({
     @required this.state,
