@@ -4,6 +4,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_gallery/wy/studio/charts_demo.dart';
+import 'package:flutter_gallery/wy/studio/form_validation_demo.dart';
 
 import '../demo/all.dart';
 import 'icons.dart';
@@ -119,6 +120,14 @@ List<GalleryDemo> _buildGalleryDemos() {
       category: _kDemos,
       routeName: ChartDemo.routeName,
       buildRoute: (BuildContext context) => const ChartDemo(),
+    ),
+    GalleryDemo(
+      title: 'Form Validation',
+      subtitle: 'add validation to a form with a single text field',
+      icon: Icons.text_fields,
+      category: _kDemos,
+      routeName: FormValidationDemo.routeName,
+      buildRoute: (BuildContext context) => const FormValidationDemo()
     ),
 
     // Style
