@@ -3,8 +3,8 @@
 // found in the LICENSE file.
 
 import 'package:flutter/material.dart';
-import 'package:flutter_gallery/wy/studio/charts_demo.dart';
-import 'package:flutter_gallery/wy/studio/form_validation_demo.dart';
+import 'package:flutter_gallery/weiyi/studio/charts_demo.dart';
+import 'package:flutter_gallery/weiyi/studio/form_validation_demo.dart';
 
 import '../demo/all.dart';
 import 'icons.dart';

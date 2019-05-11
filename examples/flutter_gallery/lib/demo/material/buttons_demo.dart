@@ -3,7 +3,7 @@
 // found in the LICENSE file.
 
 import 'package:flutter/material.dart';
-import 'package:flutter_gallery/wy/widgets/LoadingButton.dart';
+import 'package:flutter_gallery/weiyi/widgets/LoadingButton.dart';
 import 'package:toast/toast.dart';
 
 import '../../gallery/demo.dart';
