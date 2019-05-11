@@ -4,10 +4,14 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
-import '../flutter_test_alternative.dart';
+import 'package:flutter_test/src/binding.dart' show TestWidgetsFlutterBinding;
+import 'package:flutter_test/flutter_test.dart';
 
 void main() {
   test('ensure frame is scheduled for markNeedsSemanticsUpdate', () {
+    // Initialize all bindings because owner.flushSemantics() requires a window
+    TestWidgetsFlutterBinding.ensureInitialized();
+
     final TestRenderObject renderObject = TestRenderObject();
     int onNeedVisualUpdateCallCount = 0;
     final PipelineOwner owner = PipelineOwner(onNeedVisualUpdate: () {
@@ -35,19 +39,19 @@ void main() {
 
 class TestRenderObject extends RenderObject {
   @override
-  void debugAssertDoesMeetConstraints() {}
+  void debugAssertDoesMeetConstraints() { }
 
   @override
   Rect get paintBounds => null;
 
   @override
-  void performLayout() {}
+  void performLayout() { }
 
   @override
-  void performResize() {}
+  void performResize() { }
 
   @override
-  Rect get semanticBounds => Rect.fromLTWH(0.0, 0.0, 10.0, 20.0);
+  Rect get semanticBounds => const Rect.fromLTWH(0.0, 0.0, 10.0, 20.0);
 
   int describeSemanticsConfigurationCallCount = 0;
 
@@ -58,4 +62,3 @@ class TestRenderObject extends RenderObject {
     describeSemanticsConfigurationCallCount++;
   }
 }
-

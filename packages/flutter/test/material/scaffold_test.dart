@@ -218,9 +218,9 @@ void main() {
               dragStartBehavior: DragStartBehavior.down,
               controller: scrollOffset,
               children: List<Widget>.generate(10,
-                (int index) => SizedBox(height: 100.0, child: Text('D$index'))
-              )
-            )
+                (int index) => SizedBox(height: 100.0, child: Text('D$index')),
+              ),
+            ),
           ),
           body: CustomScrollView(
             slivers: <Widget>[
@@ -240,7 +240,7 @@ void main() {
               ),
             ],
           ),
-        )
+        ),
       )
     );
 
@@ -272,7 +272,7 @@ void main() {
             primary: true,
             slivers: <Widget>[
               const SliverAppBar(
-                title: Text('Title')
+                title: Text('Title'),
               ),
               SliverList(
                 delegate: SliverChildListDelegate(List<Widget>.generate(
@@ -335,7 +335,6 @@ void main() {
         ),
       ),
     );
-
     await tester.tap(find.text('X'));
     await tester.pump(); // start animation
     await tester.pump(const Duration(seconds: 1));
@@ -367,7 +366,7 @@ void main() {
                 didPressButton = true;
               },
               child: const Text('X'),
-            )
+            ),
           ],
         ),
       ),
@@ -412,7 +411,7 @@ void main() {
         '/scaffold': (_) => Scaffold(
             appBar: AppBar(),
             body: const Text('Scaffold'),
-        )
+        ),
       };
       await tester.pumpWidget(
         MaterialApp(theme: ThemeData(platform: platform), routes: routes)
@@ -574,6 +573,63 @@ void main() {
       expect(tester.element(find.byKey(testKey)).size, const Size(88.0, 48.0));
       expect(tester.renderObject<RenderBox>(find.byKey(testKey)).localToGlobal(Offset.zero), const Offset(0.0, 0.0));
     });
+
+    testWidgets('body size with extendBody', (WidgetTester tester) async {
+      final Key bodyKey = UniqueKey();
+      double mediaQueryBottom;
+
+      Widget buildFrame({ bool extendBody, bool resizeToAvoidBottomInset, double viewInsetBottom = 0.0 }) {
+        return Directionality(
+          textDirection: TextDirection.ltr,
+          child: MediaQuery(
+            data: MediaQueryData(
+              viewInsets: EdgeInsets.only(bottom: viewInsetBottom),
+            ),
+            child: Scaffold(
+              resizeToAvoidBottomInset: resizeToAvoidBottomInset,
+              extendBody: extendBody,
+              body: Builder(
+                builder: (BuildContext context) {
+                  mediaQueryBottom = MediaQuery.of(context).padding.bottom;
+                  return Container(key: bodyKey);
+                },
+              ),
+              bottomNavigationBar: const BottomAppBar(
+                child: SizedBox(height: 48.0,),
+              ),
+            ),
+          ),
+        );
+      }
+
+      await tester.pumpWidget(buildFrame(extendBody: true));
+      expect(tester.getSize(find.byKey(bodyKey)), const Size(800.0, 600.0));
+      expect(mediaQueryBottom, 48.0);
+
+      await tester.pumpWidget(buildFrame(extendBody: false));
+      expect(tester.getSize(find.byKey(bodyKey)), const Size(800.0, 552.0)); // 552 = 600 - 48 (BAB height)
+      expect(mediaQueryBottom, 0.0);
+
+      // If resizeToAvoidBottomInsets is false, same results as if it was unspecified (null).
+      await tester.pumpWidget(buildFrame(extendBody: true, resizeToAvoidBottomInset: false, viewInsetBottom: 100.0));
+      expect(tester.getSize(find.byKey(bodyKey)), const Size(800.0, 600.0));
+      expect(mediaQueryBottom, 48.0);
+
+      await tester.pumpWidget(buildFrame(extendBody: false, resizeToAvoidBottomInset: false, viewInsetBottom: 100.0));
+      expect(tester.getSize(find.byKey(bodyKey)), const Size(800.0, 552.0));
+      expect(mediaQueryBottom, 0.0);
+
+      // If resizeToAvoidBottomInsets is true and viewInsets.bottom is > the bottom
+      // navigation bar's height then the body always resizes and the MediaQuery
+      // isn't adjusted. This case corresponds to the keyboard appearing.
+      await tester.pumpWidget(buildFrame(extendBody: true, resizeToAvoidBottomInset: true, viewInsetBottom: 100.0));
+      expect(tester.getSize(find.byKey(bodyKey)), const Size(800.0, 500.0));
+      expect(mediaQueryBottom, 0.0);
+
+      await tester.pumpWidget(buildFrame(extendBody: false, resizeToAvoidBottomInset: true, viewInsetBottom: 100.0));
+      expect(tester.getSize(find.byKey(bodyKey)), const Size(800.0, 500.0));
+      expect(mediaQueryBottom, 0.0);
+    });
   });
 
   testWidgets('Open drawer hides underlying semantics tree', (WidgetTester tester) async {
@@ -703,18 +759,18 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
 
-    expect(tester.getRect(find.byKey(appBar)), Rect.fromLTRB(0.0, 0.0, 800.0, 43.0));
-    expect(tester.getRect(find.byKey(body)), Rect.fromLTRB(0.0, 43.0, 800.0, 348.0));
-    expect(tester.getRect(find.byKey(floatingActionButton)), Rect.fromLTRB(36.0, 255.0, 113.0, 332.0));
-    expect(tester.getRect(find.byKey(persistentFooterButton)), Rect.fromLTRB(28.0, 357.0, 128.0, 447.0)); // Note: has 8px each top/bottom padding.
-    expect(tester.getRect(find.byKey(drawer)), Rect.fromLTRB(596.0, 0.0, 800.0, 600.0));
-    expect(tester.getRect(find.byKey(bottomNavigationBar)), Rect.fromLTRB(0.0, 515.0, 800.0, 600.0));
-    expect(tester.getRect(find.byKey(insideAppBar)), Rect.fromLTRB(20.0, 30.0, 750.0, 43.0));
-    expect(tester.getRect(find.byKey(insideBody)), Rect.fromLTRB(20.0, 43.0, 750.0, 348.0));
-    expect(tester.getRect(find.byKey(insideFloatingActionButton)), Rect.fromLTRB(36.0, 255.0, 113.0, 332.0));
-    expect(tester.getRect(find.byKey(insidePersistentFooterButton)), Rect.fromLTRB(28.0, 357.0, 128.0, 447.0));
-    expect(tester.getRect(find.byKey(insideDrawer)), Rect.fromLTRB(596.0, 30.0, 750.0, 540.0));
-    expect(tester.getRect(find.byKey(insideBottomNavigationBar)), Rect.fromLTRB(20.0, 515.0, 750.0, 540.0));
+    expect(tester.getRect(find.byKey(appBar)), const Rect.fromLTRB(0.0, 0.0, 800.0, 43.0));
+    expect(tester.getRect(find.byKey(body)), const Rect.fromLTRB(0.0, 43.0, 800.0, 348.0));
+    expect(tester.getRect(find.byKey(floatingActionButton)), rectMoreOrLessEquals(const Rect.fromLTRB(36.0, 255.0, 113.0, 332.0)));
+    expect(tester.getRect(find.byKey(persistentFooterButton)),const  Rect.fromLTRB(28.0, 357.0, 128.0, 447.0)); // Note: has 8px each top/bottom padding.
+    expect(tester.getRect(find.byKey(drawer)), const Rect.fromLTRB(596.0, 0.0, 800.0, 600.0));
+    expect(tester.getRect(find.byKey(bottomNavigationBar)), const Rect.fromLTRB(0.0, 515.0, 800.0, 600.0));
+    expect(tester.getRect(find.byKey(insideAppBar)), const Rect.fromLTRB(20.0, 30.0, 750.0, 43.0));
+    expect(tester.getRect(find.byKey(insideBody)), const Rect.fromLTRB(20.0, 43.0, 750.0, 348.0));
+    expect(tester.getRect(find.byKey(insideFloatingActionButton)), rectMoreOrLessEquals(const Rect.fromLTRB(36.0, 255.0, 113.0, 332.0)));
+    expect(tester.getRect(find.byKey(insidePersistentFooterButton)), const Rect.fromLTRB(28.0, 357.0, 128.0, 447.0));
+    expect(tester.getRect(find.byKey(insideDrawer)), const Rect.fromLTRB(596.0, 30.0, 750.0, 540.0));
+    expect(tester.getRect(find.byKey(insideBottomNavigationBar)), const Rect.fromLTRB(20.0, 515.0, 750.0, 540.0));
   });
 
   testWidgets('Scaffold and extreme window padding - persistent footer buttons only', (WidgetTester tester) async {
@@ -798,16 +854,16 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(seconds: 1));
 
-    expect(tester.getRect(find.byKey(appBar)), Rect.fromLTRB(0.0, 0.0, 800.0, 43.0));
-    expect(tester.getRect(find.byKey(body)), Rect.fromLTRB(0.0, 43.0, 800.0, 400.0));
-    expect(tester.getRect(find.byKey(floatingActionButton)), Rect.fromLTRB(36.0, 307.0, 113.0, 384.0));
-    expect(tester.getRect(find.byKey(persistentFooterButton)), Rect.fromLTRB(28.0, 442.0, 128.0, 532.0)); // Note: has 8px each top/bottom padding.
-    expect(tester.getRect(find.byKey(drawer)), Rect.fromLTRB(596.0, 0.0, 800.0, 600.0));
-    expect(tester.getRect(find.byKey(insideAppBar)), Rect.fromLTRB(20.0, 30.0, 750.0, 43.0));
-    expect(tester.getRect(find.byKey(insideBody)), Rect.fromLTRB(20.0, 43.0, 750.0, 400.0));
-    expect(tester.getRect(find.byKey(insideFloatingActionButton)), Rect.fromLTRB(36.0, 307.0, 113.0, 384.0));
-    expect(tester.getRect(find.byKey(insidePersistentFooterButton)), Rect.fromLTRB(28.0, 442.0, 128.0, 532.0));
-    expect(tester.getRect(find.byKey(insideDrawer)), Rect.fromLTRB(596.0, 30.0, 750.0, 540.0));
+    expect(tester.getRect(find.byKey(appBar)), const Rect.fromLTRB(0.0, 0.0, 800.0, 43.0));
+    expect(tester.getRect(find.byKey(body)), const Rect.fromLTRB(0.0, 43.0, 800.0, 400.0));
+    expect(tester.getRect(find.byKey(floatingActionButton)), rectMoreOrLessEquals(const Rect.fromLTRB(36.0, 307.0, 113.0, 384.0)));
+    expect(tester.getRect(find.byKey(persistentFooterButton)), const Rect.fromLTRB(28.0, 442.0, 128.0, 532.0)); // Note: has 8px each top/bottom padding.
+    expect(tester.getRect(find.byKey(drawer)), const Rect.fromLTRB(596.0, 0.0, 800.0, 600.0));
+    expect(tester.getRect(find.byKey(insideAppBar)), const Rect.fromLTRB(20.0, 30.0, 750.0, 43.0));
+    expect(tester.getRect(find.byKey(insideBody)), const Rect.fromLTRB(20.0, 43.0, 750.0, 400.0));
+    expect(tester.getRect(find.byKey(insideFloatingActionButton)), rectMoreOrLessEquals(const Rect.fromLTRB(36.0, 307.0, 113.0, 384.0)));
+    expect(tester.getRect(find.byKey(insidePersistentFooterButton)), const Rect.fromLTRB(28.0, 442.0, 128.0, 532.0));
+    expect(tester.getRect(find.byKey(insideDrawer)), const Rect.fromLTRB(596.0, 30.0, 750.0, 540.0));
   });
 
 
@@ -830,7 +886,7 @@ void main() {
 
       expect(
         geometry.bottomNavigationBarTop,
-        appBox.size.height - navigationBox.size.height
+        appBox.size.height - navigationBox.size.height,
       );
     });
 
@@ -847,7 +903,7 @@ void main() {
 
       expect(
         geometry.bottomNavigationBarTop,
-        null
+        null,
       );
     });
 
@@ -858,7 +914,7 @@ void main() {
             floatingActionButton: FloatingActionButton(
               key: key,
               child: _GeometryListener(),
-              onPressed: () {},
+              onPressed: () { },
             ),
       )));
 
@@ -870,7 +926,7 @@ void main() {
 
       expect(
         geometry.floatingActionButtonArea,
-        fabRect
+        fabRect,
       );
     });
 
@@ -887,7 +943,7 @@ void main() {
 
       expect(
           geometry.floatingActionButtonArea,
-          null
+          null,
       );
     });
 
@@ -905,7 +961,7 @@ void main() {
             floatingActionButton: FloatingActionButton(
               key: key,
               child: _GeometryListener(),
-              onPressed: () {},
+              onPressed: () { },
             ),
       )));
 
@@ -934,22 +990,22 @@ void main() {
 
       expect(
         geometry.floatingActionButtonArea,
-        fabRect
+        fabRect,
       );
 
       expect(
         geometry.floatingActionButtonArea.center,
-        transitioningFabRect.center
+        transitioningFabRect.center,
       );
 
       expect(
         geometry.floatingActionButtonArea.width,
-        greaterThan(transitioningFabRect.width)
+        greaterThan(transitioningFabRect.width),
       );
 
       expect(
         geometry.floatingActionButtonArea.height,
-        greaterThan(transitioningFabRect.height)
+        greaterThan(transitioningFabRect.height),
       );
     });
 
@@ -973,7 +1029,7 @@ void main() {
             floatingActionButton: FloatingActionButton(
               key: key,
               child: _GeometryListener(),
-              onPressed: () {},
+              onPressed: () { },
             ),
       )));
 
@@ -1043,7 +1099,7 @@ void main() {
               body: const Text('scaffold body'),
               appBar: AppBar(
                 centerTitle: true,
-                title: const Text('Title')
+                title: const Text('Title'),
               ),
             ),
           ),
@@ -1096,8 +1152,8 @@ void main() {
               body: const Text('scaffold body'),
               appBar: AppBar(
                 centerTitle: true,
-                title: const Text('Title')
-              )
+                title: const Text('Title'),
+              ),
             ),
           ),
         ),
@@ -1143,7 +1199,7 @@ void main() {
             body: const Text('scaffold body'),
             appBar: AppBar(
               centerTitle: true,
-              title: const Text('Title')
+              title: const Text('Title'),
             ),
           ),
         ),
@@ -1171,7 +1227,7 @@ void main() {
               body: const Text('scaffold body'),
               appBar: AppBar(
                 centerTitle: true,
-                title: const Text('Title')
+                title: const Text('Title'),
               ),
             ),
           ),
@@ -1206,7 +1262,7 @@ void main() {
                 body: const Text('scaffold body'),
                 appBar: AppBar(
                   centerTitle: true,
-                  title: const Text('Title')
+                  title: const Text('Title'),
                 ),
               ),
             ),

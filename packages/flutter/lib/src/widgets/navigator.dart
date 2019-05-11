@@ -5,6 +5,7 @@
 import 'dart:async';
 import 'dart:developer' as developer;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/scheduler.dart';
 
@@ -393,6 +394,16 @@ class NavigatorObserver {
 /// manages a stack of [Route] objects and provides methods for managing
 /// the stack, like [Navigator.push] and [Navigator.pop].
 ///
+/// When your user interface fits this paradigm of a stack, where the user
+/// should be able to _navigate_ back to an earlier element in the stack,
+/// the use of routes and the Navigator is appropriate. On certain platforms,
+/// such as Android, the system UI will provide a back button (outside the
+/// bounds of your application) that will allow the user to navigate back
+/// to earlier routes in your application's stack. On platforms that don't
+/// have this build-in navigation mechanism, the use of an [AppBar] (typically
+/// used in the [Scaffold.appBar] property) can automatically add a back
+/// button for user navigation.
+///
 /// ### Displaying a full-screen route
 ///
 /// Although you can create a navigator directly, it's most common to use
@@ -563,7 +574,7 @@ class NavigatorObserver {
 ///
 /// The page route is built in two parts, the "page" and the
 /// "transitions". The page becomes a descendant of the child passed to
-/// the `buildTransitions` method. Typically the page is only built once,
+/// the `transitionsBuilder` function. Typically the page is only built once,
 /// because it doesn't depend on its animation parameters (elided with `_`
 /// and `__` in this example). The transition is built on every frame
 /// for its duration.
@@ -593,20 +604,30 @@ class NavigatorObserver {
 /// in this situation, but it's a real world example where nested [Navigator]s
 /// are used.
 ///
-/// #### Sample Code
-///
+/// {@tool snippet --template=freeform}
 /// The following example demonstrates how a nested [Navigator] can be used to
 /// present a standalone user registration journey.
 ///
 /// Even though this example uses two [Navigator]s to demonstrate nested
 /// [Navigator]s, a similar result is possible using only a single [Navigator].
 ///
+/// Run this example with `flutter run --route=/signup` to start it with
+/// the signup flow instead of on the home page.
+///
+/// ```dart imports
+/// import 'package:flutter/material.dart';
+/// ```
+///
+/// ```dart main
+/// void main() => runApp(new MyApp());
+/// ```
+///
 /// ```dart
 /// class MyApp extends StatelessWidget {
 ///   @override
 ///   Widget build(BuildContext context) {
 ///     return MaterialApp(
-///       // ...some parameters omitted...
+///       title: 'Flutter Code Sample for Navigator',
 ///       // MaterialApp contains our top-level Navigator
 ///       initialRoute: '/',
 ///       routes: {
@@ -617,44 +638,104 @@ class NavigatorObserver {
 ///   }
 /// }
 ///
+/// class HomePage extends StatelessWidget {
+///   @override
+///   Widget build(BuildContext context) {
+///     return DefaultTextStyle(
+///       style: Theme.of(context).textTheme.display1,
+///       child: Container(
+///         color: Colors.white,
+///         alignment: Alignment.center,
+///         child: Text('Home Page'),
+///       ),
+///     );
+///   }
+/// }
+///
+/// class CollectPersonalInfoPage extends StatelessWidget {
+///   @override
+///   Widget build(BuildContext context) {
+///     return DefaultTextStyle(
+///       style: Theme.of(context).textTheme.display1,
+///       child: GestureDetector(
+///         onTap: () {
+///           // This moves from the personal info page to the credentials page,
+///           // replacing this page with that one.
+///           Navigator.of(context)
+///             .pushReplacementNamed('signup/choose_credentials');
+///         },
+///         child: Container(
+///           color: Colors.lightBlue,
+///           alignment: Alignment.center,
+///           child: Text('Collect Personal Info Page'),
+///         ),
+///       ),
+///     );
+///   }
+/// }
+///
+/// class ChooseCredentialsPage extends StatelessWidget {
+///   const ChooseCredentialsPage({
+///     this.onSignupComplete,
+///   });
+///
+///   final VoidCallback onSignupComplete;
+///
+///   @override
+///   Widget build(BuildContext context) {
+///     return GestureDetector(
+///       onTap: onSignupComplete,
+///       child: DefaultTextStyle(
+///         style: Theme.of(context).textTheme.display1,
+///         child: Container(
+///           color: Colors.pinkAccent,
+///           alignment: Alignment.center,
+///           child: Text('Choose Credentials Page'),
+///         ),
+///       ),
+///     );
+///   }
+/// }
+///
 /// class SignUpPage extends StatelessWidget {
-///  @override
-///  Widget build(BuildContext context) {
-///    // SignUpPage builds its own Navigator which ends up being a nested
-///    // Navigator in our app.
-///    return Navigator(
-///      initialRoute: 'signup/personal_info',
-///      onGenerateRoute: (RouteSettings settings) {
-///        WidgetBuilder builder;
-///        switch (settings.name) {
-///          case 'signup/personal_info':
-///            // Assume CollectPersonalInfoPage collects personal info and then
-///            // navigates to 'signup/choose_credentials'.
-///            builder = (BuildContext _) => CollectPersonalInfoPage();
-///            break;
-///          case 'signup/choose_credentials':
-///            // Assume ChooseCredentialsPage collects new credentials and then
-///            // invokes 'onSignupComplete()'.
-///            builder = (BuildContext _) => ChooseCredentialsPage(
-///              onSignupComplete: () {
-///                // Referencing Navigator.of(context) from here refers to the
-///                // top level Navigator because SignUpPage is above the
-///                // nested Navigator that it created. Therefore, this pop()
-///                // will pop the entire "sign up" journey and return to the
-///                // "/" route, AKA HomePage.
-///                Navigator.of(context).pop();
-///              },
-///            );
-///            break;
-///          default:
-///            throw Exception('Invalid route: ${settings.name}');
-///        }
-///        return MaterialPageRoute(builder: builder, settings: settings);
-///      },
-///    );
-///  }
+///   @override
+///   Widget build(BuildContext context) {
+///     // SignUpPage builds its own Navigator which ends up being a nested
+///     // Navigator in our app.
+///     return Navigator(
+///       initialRoute: 'signup/personal_info',
+///       onGenerateRoute: (RouteSettings settings) {
+///         WidgetBuilder builder;
+///         switch (settings.name) {
+///           case 'signup/personal_info':
+///           // Assume CollectPersonalInfoPage collects personal info and then
+///           // navigates to 'signup/choose_credentials'.
+///             builder = (BuildContext _) => CollectPersonalInfoPage();
+///             break;
+///           case 'signup/choose_credentials':
+///           // Assume ChooseCredentialsPage collects new credentials and then
+///           // invokes 'onSignupComplete()'.
+///             builder = (BuildContext _) => ChooseCredentialsPage(
+///               onSignupComplete: () {
+///                 // Referencing Navigator.of(context) from here refers to the
+///                 // top level Navigator because SignUpPage is above the
+///                 // nested Navigator that it created. Therefore, this pop()
+///                 // will pop the entire "sign up" journey and return to the
+///                 // "/" route, AKA HomePage.
+///                 Navigator.of(context).pop();
+///               },
+///             );
+///             break;
+///           default:
+///             throw Exception('Invalid route: ${settings.name}');
+///         }
+///         return MaterialPageRoute(builder: builder, settings: settings);
+///       },
+///     );
+///   }
 /// }
 /// ```
+/// {@end-tool}
 ///
 /// [Navigator.of] operates on the nearest ancestor [Navigator] from the given
 /// [BuildContext]. Be sure to provide a [BuildContext] below the intended
@@ -670,7 +751,7 @@ class Navigator extends StatefulWidget {
     this.initialRoute,
     @required this.onGenerateRoute,
     this.onUnknownRoute,
-    this.observers = const <NavigatorObserver>[]
+    this.observers = const <NavigatorObserver>[],
   }) : assert(onGenerateRoute != null),
        super(key: key);
 
@@ -1367,9 +1448,9 @@ class Navigator extends StatefulWidget {
   /// instances of [Navigator].
   static NavigatorState of(
     BuildContext context, {
-      bool rootNavigator = false,
-      bool nullOk = false,
-    }) {
+    bool rootNavigator = false,
+    bool nullOk = false,
+  }) {
     final NavigatorState navigator = rootNavigator
         ? context.rootAncestorStateOfType(const TypeMatcher<NavigatorState>())
         : context.ancestorStateOfType(const TypeMatcher<NavigatorState>());
@@ -1394,10 +1475,10 @@ class Navigator extends StatefulWidget {
 class NavigatorState extends State<Navigator> with TickerProviderStateMixin {
   final GlobalKey<OverlayState> _overlayKey = GlobalKey<OverlayState>();
   final List<Route<dynamic>> _history = <Route<dynamic>>[];
-  final Set<Route<dynamic>> _poppedRoutes = Set<Route<dynamic>>();
+  final Set<Route<dynamic>> _poppedRoutes = <Route<dynamic>>{};
 
   /// The [FocusScopeNode] for the [FocusScope] that encloses the routes.
-  final FocusScopeNode focusScopeNode = FocusScopeNode();
+  final FocusScopeNode focusScopeNode = FocusScopeNode(debugLabel: 'Navigator Scope');
 
   final List<OverlayEntry> _initialOverlayEntries = <OverlayEntry>[];
 
@@ -1485,7 +1566,7 @@ class NavigatorState extends State<Navigator> with TickerProviderStateMixin {
       route.dispose();
     _poppedRoutes.clear();
     _history.clear();
-    focusScopeNode.detach();
+    focusScopeNode.dispose();
     super.dispose();
     assert(() { _debugLocked = false; return true; }());
   }
@@ -1684,8 +1765,7 @@ class NavigatorState extends State<Navigator> with TickerProviderStateMixin {
   }
 
   void _afterNavigation() {
-    const bool isReleaseMode = bool.fromEnvironment('dart.vm.product');
-    if (!isReleaseMode) {
+    if (!kReleaseMode) {
       // This event is used by performance tools that show stats for the
       // time interval since the last navigation event occurred ensuring that
       // stats only reflect the current page.
@@ -2075,7 +2155,7 @@ class NavigatorState extends State<Navigator> with TickerProviderStateMixin {
     }
   }
 
-  final Set<int> _activePointers = Set<int>();
+  final Set<int> _activePointers = <int>{};
 
   void _handlePointerDown(PointerDownEvent event) {
     _activePointers.add(event.pointer);

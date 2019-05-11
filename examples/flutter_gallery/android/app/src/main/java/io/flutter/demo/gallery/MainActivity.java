@@ -8,8 +8,8 @@ import android.os.Build;
 import android.os.Bundle;
 
 import io.flutter.app.FlutterActivity;
-import io.flutter.view.FlutterView;
 import io.flutter.plugins.GeneratedPluginRegistrant;
+import io.flutter.view.FlutterView;
 
 public class MainActivity extends FlutterActivity {
 
@@ -29,7 +29,7 @@ public class MainActivity extends FlutterActivity {
             @Override
             public void onFirstFrame() {
                 // Report fully drawn time for Play Store Console.
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
                     MainActivity.this.reportFullyDrawn();
                 }
                 MainActivity.this.getFlutterView().removeFirstFrameListener(this);

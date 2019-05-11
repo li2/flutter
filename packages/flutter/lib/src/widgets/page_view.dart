@@ -112,7 +112,8 @@ class PageController extends ScrollController {
   /// The returned [Future] resolves when the animation completes.
   ///
   /// The `duration` and `curve` arguments must not be null.
-  Future<void> animateToPage(int page, {
+  Future<void> animateToPage(
+    int page, {
     @required Duration duration,
     @required Curve curve,
   }) {
@@ -250,6 +251,29 @@ class _PagePosition extends ScrollPositionWithSingleContext implements PageMetri
   final int initialPage;
   double _pageToUseOnStartup;
 
+  /// If [pixels] isn't set by [applyViewportDimension] before [dispose] is
+  /// called, this could throw an assert as [pixels] will be set to null.
+  ///
+  /// With [Tab]s, this happens when there are nested [TabBarView]s and there
+  /// is an attempt to warp over the nested tab to a tab adjacent to it.
+  ///
+  /// This flag will be set to true once the dimensions have been established
+  /// and [pixels] is set.
+  bool isInitialPixelsValueSet = false;
+
+  @override
+  void dispose() {
+    // TODO(shihaohong): remove workaround once these issues have been
+    // resolved, https://github.com/flutter/flutter/issues/32054,
+    // https://github.com/flutter/flutter/issues/32056
+    // Sets `pixels` to a non-null value before `ScrollPosition.dispose` is
+    // invoked if it was never set by `applyViewportDimension`.
+    if (pixels == null && !isInitialPixelsValueSet) {
+      correctPixels(0);
+    }
+    super.dispose();
+  }
+
   @override
   double get viewportFraction => _viewportFraction;
   double _viewportFraction;
@@ -294,8 +318,10 @@ class _PagePosition extends ScrollPositionWithSingleContext implements PageMetri
     final double oldPixels = pixels;
     final double page = (oldPixels == null || oldViewportDimensions == 0.0) ? _pageToUseOnStartup : getPageFromPixels(oldPixels, oldViewportDimensions);
     final double newPixels = getPixelsFromPage(page);
+
     if (newPixels != oldPixels) {
       correctPixels(newPixels);
+      isInitialPixelsValueSet = true;
       return false;
     }
     return result;
@@ -399,6 +425,8 @@ const PageScrollPhysics _kPagePhysics = PageScrollPhysics();
 /// [PageView] is first constructed, and the [PageController.viewportFraction],
 /// which determines the size of the pages as a fraction of the viewport size.
 ///
+/// {@youtube 560 315 https://www.youtube.com/watch?v=J1gE9xvph-A}
+///
 /// See also:
 ///
 ///  * [PageController], which controls which page is visible in the view.
@@ -424,7 +452,7 @@ class PageView extends StatefulWidget {
     this.pageSnapping = true,
     this.onPageChanged,
     List<Widget> children = const <Widget>[],
-    this.dragStartBehavior = DragStartBehavior.down,
+    this.dragStartBehavior = DragStartBehavior.start,
   }) : controller = controller ?? _defaultPageController,
        childrenDelegate = SliverChildListDelegate(children),
        super(key: key);
@@ -451,7 +479,7 @@ class PageView extends StatefulWidget {
     this.onPageChanged,
     @required IndexedWidgetBuilder itemBuilder,
     int itemCount,
-    this.dragStartBehavior = DragStartBehavior.down,
+    this.dragStartBehavior = DragStartBehavior.start,
   }) : controller = controller ?? _defaultPageController,
        childrenDelegate = SliverChildBuilderDelegate(itemBuilder, childCount: itemCount),
        super(key: key);
@@ -467,7 +495,7 @@ class PageView extends StatefulWidget {
     this.pageSnapping = true,
     this.onPageChanged,
     @required this.childrenDelegate,
-    this.dragStartBehavior = DragStartBehavior.down,
+    this.dragStartBehavior = DragStartBehavior.start,
   }) : assert(childrenDelegate != null),
        controller = controller ?? _defaultPageController,
        super(key: key);
@@ -581,7 +609,7 @@ class _PageViewState extends State<PageView> {
             slivers: <Widget>[
               SliverFillViewport(
                 viewportFraction: widget.controller.viewportFraction,
-                delegate: widget.childrenDelegate
+                delegate: widget.childrenDelegate,
               ),
             ],
           );

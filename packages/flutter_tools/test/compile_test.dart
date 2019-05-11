@@ -5,6 +5,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:flutter_tools/src/base/common.dart';
 import 'package:flutter_tools/src/base/file_system.dart';
 import 'package:flutter_tools/src/base/io.dart';
 import 'package:flutter_tools/src/base/context.dart';
@@ -64,12 +65,12 @@ example:file:///example/lib/
       const String multiRootPackagesContents = r'''
 xml:file:///Users/flutter_user/.pub-cache/hosted/pub.dartlang.org/xml-3.2.3/lib/
 yaml:file:///Users/flutter_user/.pub-cache/hosted/pub.dartlang.org/yaml-2.1.15/lib/
-example:org-dartlang-app:///lib/
+example:org-dartlang-app:/
 ''';
       when(mockFile.readAsBytesSync()).thenReturn(utf8.encode(multiRootPackagesContents));
 
       testUsingContext('Maps main file from same package on multiroot scheme', () async {
-        final PackageUriMapper packageUriMapper = PackageUriMapper('/example/lib/main.dart', '.packages', 'org-dartlang-app', <String>['/example', '/gen']);
+        final PackageUriMapper packageUriMapper = PackageUriMapper('/example/lib/main.dart', '.packages', 'org-dartlang-app', <String>['/example/lib/', '/gen/lib/']);
         expect(packageUriMapper.map('/example/lib/main.dart').toString(), 'package:example/main.dart');
       }, overrides: <Type, Generator>{
         FileSystem: () => mockFileSystem,
@@ -77,14 +78,17 @@ example:org-dartlang-app:///lib/
     });
   });
 
-  test(StdoutHandler, () async {
+  testUsingContext('StdOutHandler test', () async {
     final StdoutHandler stdoutHandler = StdoutHandler();
     stdoutHandler.handler('result 12345');
     expect(stdoutHandler.boundaryKey, '12345');
+    stdoutHandler.handler('12345');
     stdoutHandler.handler('12345 message 0');
     final CompilerOutput output = await stdoutHandler.compilerOutput.future;
     expect(output.errorCount, 0);
     expect(output.outputFilename, 'message');
+  }, overrides: <Type, Generator>{
+    Logger: () => BufferLogger(),
   });
 
   group('batch compile', () {
@@ -110,14 +114,14 @@ example:org-dartlang-app:///lib/
     });
 
     testUsingContext('single dart successful compilation', () async {
-      final BufferLogger logger = context[Logger];
+      final BufferLogger logger = context.get<Logger>();
       when(mockFrontendServer.stdout)
           .thenAnswer((Invocation invocation) => Stream<List<int>>.fromFuture(
             Future<List<int>>.value(utf8.encode(
-              'result abc\nline1\nline2\nabc /path/to/main.dart.dill 0'
+              'result abc\nline1\nline2\nabc\nabc /path/to/main.dart.dill 0'
             ))
           ));
-      final KernelCompiler kernelCompiler = await kernelCompilerFactory.create();
+      final KernelCompiler kernelCompiler = await kernelCompilerFactory.create(null);
       final CompilerOutput output = await kernelCompiler.compile(sdkRoot: '/path/to/sdkroot',
         mainPath: '/path/to/main.dart',
         trackWidgetCreation: false,
@@ -133,15 +137,15 @@ example:org-dartlang-app:///lib/
     });
 
     testUsingContext('single dart failed compilation', () async {
-      final BufferLogger logger = context[Logger];
+      final BufferLogger logger = context.get<Logger>();
 
       when(mockFrontendServer.stdout)
           .thenAnswer((Invocation invocation) => Stream<List<int>>.fromFuture(
             Future<List<int>>.value(utf8.encode(
-              'result abc\nline1\nline2\nabc'
+              'result abc\nline1\nline2\nabc\nabc'
             ))
           ));
-      final KernelCompiler kernelCompiler = await kernelCompilerFactory.create();
+      final KernelCompiler kernelCompiler = await kernelCompilerFactory.create(null);
       final CompilerOutput output = await kernelCompiler.compile(sdkRoot: '/path/to/sdkroot',
         mainPath: '/path/to/main.dart',
         trackWidgetCreation: false,
@@ -159,15 +163,15 @@ example:org-dartlang-app:///lib/
     testUsingContext('single dart abnormal compiler termination', () async {
       when(mockFrontendServer.exitCode).thenAnswer((_) async => 255);
 
-      final BufferLogger logger = context[Logger];
+      final BufferLogger logger = context.get<Logger>();
 
       when(mockFrontendServer.stdout)
           .thenAnswer((Invocation invocation) => Stream<List<int>>.fromFuture(
           Future<List<int>>.value(utf8.encode(
-              'result abc\nline1\nline2\nabc'
+              'result abc\nline1\nline2\nabc\nabc'
           ))
       ));
-      final KernelCompiler kernelCompiler = await kernelCompilerFactory.create();
+      final KernelCompiler kernelCompiler = await kernelCompilerFactory.create(null);
       final CompilerOutput output = await kernelCompiler.compile(
         sdkRoot: '/path/to/sdkroot',
         mainPath: '/path/to/main.dart',
@@ -217,12 +221,12 @@ example:org-dartlang-app:///lib/
     });
 
     testUsingContext('single dart compile', () async {
-      final BufferLogger logger = context[Logger];
+      final BufferLogger logger = context.get<Logger>();
 
       when(mockFrontendServer.stdout)
           .thenAnswer((Invocation invocation) => Stream<List<int>>.fromFuture(
             Future<List<int>>.value(utf8.encode(
-              'result abc\nline1\nline2\nabc /path/to/main.dart.dill 0'
+              'result abc\nline1\nline2\nabc\nabc /path/to/main.dart.dill 0'
             ))
           ));
 
@@ -261,12 +265,12 @@ example:org-dartlang-app:///lib/
     });
 
     testUsingContext('compile and recompile', () async {
-      final BufferLogger logger = context[Logger];
+      final BufferLogger logger = context.get<Logger>();
 
       final StreamController<List<int>> streamController = StreamController<List<int>>();
       when(mockFrontendServer.stdout)
           .thenAnswer((Invocation invocation) => streamController.stream);
-      streamController.add(utf8.encode('result abc\nline0\nline1\nabc /path/to/main.dart.dill 0\n'));
+      streamController.add(utf8.encode('result abc\nline0\nline1\nabc\nabc /path/to/main.dart.dill 0\n'));
       await generator.recompile(
         '/path/to/main.dart',
         null, /* invalidatedFiles */
@@ -280,14 +284,14 @@ example:org-dartlang-app:///lib/
       await _reject(streamController, generator, mockFrontendServerStdIn, '', '');
 
       await _recompile(streamController, generator, mockFrontendServerStdIn,
-        'result abc\nline1\nline2\nabc /path/to/main.dart.dill 0\n');
+        'result abc\nline1\nline2\nabc\nabc /path/to/main.dart.dill 0\n');
 
       await _accept(streamController, generator, mockFrontendServerStdIn, '^accept\\n\$');
 
       await _recompile(streamController, generator, mockFrontendServerStdIn,
-          'result abc\nline1\nline2\nabc /path/to/main.dart.dill 0\n');
+          'result abc\nline1\nline2\nabc\nabc /path/to/main.dart.dill 0\n');
 
-      await _reject(streamController, generator, mockFrontendServerStdIn, 'result abc\nabc\n',
+      await _reject(streamController, generator, mockFrontendServerStdIn, 'result abc\nabc\nabc\nabc',
           '^reject\\n\$');
 
       verifyNoMoreInteractions(mockFrontendServerStdIn);
@@ -305,21 +309,21 @@ example:org-dartlang-app:///lib/
     });
 
     testUsingContext('compile and recompile twice', () async {
-      final BufferLogger logger = context[Logger];
+      final BufferLogger logger = context.get<Logger>();
 
       final StreamController<List<int>> streamController = StreamController<List<int>>();
       when(mockFrontendServer.stdout)
           .thenAnswer((Invocation invocation) => streamController.stream);
       streamController.add(utf8.encode(
-        'result abc\nline0\nline1\nabc /path/to/main.dart.dill 0\n'
+        'result abc\nline0\nline1\nabc\nabc /path/to/main.dart.dill 0\n'
       ));
       await generator.recompile('/path/to/main.dart', null /* invalidatedFiles */, outputPath: '/build/');
       expect(mockFrontendServerStdIn.getAndClear(), 'compile /path/to/main.dart\n');
 
       await _recompile(streamController, generator, mockFrontendServerStdIn,
-        'result abc\nline1\nline2\nabc /path/to/main.dart.dill 0\n');
+        'result abc\nline1\nline2\nabc\nabc /path/to/main.dart.dill 0\n');
       await _recompile(streamController, generator, mockFrontendServerStdIn,
-        'result abc\nline2\nline3\nabc /path/to/main.dart.dill 0\n');
+        'result abc\nline2\nline3\nabc\nabc /path/to/main.dart.dill 0\n');
 
       verifyNoMoreInteractions(mockFrontendServerStdIn);
       expect(mockFrontendServerStdIn.getAndClear(), isEmpty);
@@ -336,8 +340,7 @@ example:org-dartlang-app:///lib/
     });
   });
 
-  group('compile expression', ()
-  {
+  group('compile expression', () {
     ProcessManager mockProcessManager;
     ResidentCompiler generator;
     MockProcess mockFrontendServer;
@@ -377,7 +380,7 @@ example:org-dartlang-app:///lib/
     });
 
     testUsingContext('compile single expression', () async {
-      final BufferLogger logger = context[Logger];
+      final BufferLogger logger = context.get<Logger>();
 
       final Completer<List<int>> compileResponseCompleter =
           Completer<List<int>>();
@@ -392,7 +395,7 @@ example:org-dartlang-app:///lib/
           compileExpressionResponseCompleter.future]));
 
       compileResponseCompleter.complete(Future<List<int>>.value(utf8.encode(
-        'result abc\nline1\nline2\nabc /path/to/main.dart.dill 0\n'
+        'result abc\nline1\nline2\nabc\nabc /path/to/main.dart.dill 0\n'
       )));
 
       await generator.recompile(
@@ -409,7 +412,7 @@ example:org-dartlang-app:///lib/
 
         compileExpressionResponseCompleter.complete(
             Future<List<int>>.value(utf8.encode(
-                'result def\nline1\nline2\ndef /path/to/main.dart.dill.incremental 0\n'
+                'result def\nline1\nline2\ndef\ndef /path/to/main.dart.dill.incremental 0\n'
             )));
         generator.compileExpression(
             '2+2', null, null, null, null, false).then(
@@ -429,7 +432,7 @@ example:org-dartlang-app:///lib/
     });
 
     testUsingContext('compile expressions without awaiting', () async {
-      final BufferLogger logger = context[Logger];
+      final BufferLogger logger = context.get<Logger>();
 
       final Completer<List<int>> compileResponseCompleter = Completer<List<int>>();
       final Completer<List<int>> compileExpressionResponseCompleter1 = Completer<List<int>>();
@@ -445,23 +448,26 @@ example:org-dartlang-app:///lib/
           ]));
 
       // The test manages timing via completers.
-      generator.recompile( // ignore: unawaited_futures
-        '/path/to/main.dart',
-        null, /* invalidatedFiles */
-        outputPath: '/build/',
-      ).then((CompilerOutput outputCompile) {
-        expect(logger.errorText,
-            equals('\nCompiler message:\nline1\nline2\n'));
-        expect(outputCompile.outputFilename, equals('/path/to/main.dart.dill'));
+      unawaited(
+        generator.recompile(
+          '/path/to/main.dart',
+          null, /* invalidatedFiles */
+          outputPath: '/build/',
+        ).then((CompilerOutput outputCompile) {
+          expect(logger.errorText,
+              equals('\nCompiler message:\nline1\nline2\n'));
+          expect(outputCompile.outputFilename, equals('/path/to/main.dart.dill'));
 
-        compileExpressionResponseCompleter1.complete(Future<List<int>>.value(utf8.encode(
-            'result def\nline1\nline2\ndef /path/to/main.dart.dill.incremental 0\n'
-        )));
-      });
+          compileExpressionResponseCompleter1.complete(Future<List<int>>.value(utf8.encode(
+              'result def\nline1\nline2\ndef /path/to/main.dart.dill.incremental 0\n'
+          )));
+        }),
+      );
 
       // The test manages timing via completers.
       final Completer<bool> lastExpressionCompleted = Completer<bool>();
-      generator.compileExpression('0+1', null, null, null, null, false).then( // ignore: unawaited_futures
+      unawaited(
+        generator.compileExpression('0+1', null, null, null, null, false).then(
           (CompilerOutput outputExpression) {
             expect(outputExpression, isNotNull);
             expect(outputExpression.outputFilename,
@@ -470,20 +476,25 @@ example:org-dartlang-app:///lib/
             compileExpressionResponseCompleter2.complete(Future<List<int>>.value(utf8.encode(
                 'result def\nline1\nline2\ndef /path/to/main.dart.dill.incremental 0\n'
             )));
-          });
+          },
+        ),
+      );
 
       // The test manages timing via completers.
-      generator.compileExpression('1+1', null, null, null, null, false).then( // ignore: unawaited_futures
+      unawaited(
+        generator.compileExpression('1+1', null, null, null, null, false).then(
           (CompilerOutput outputExpression) {
             expect(outputExpression, isNotNull);
             expect(outputExpression.outputFilename,
                 equals('/path/to/main.dart.dill.incremental'));
             expect(outputExpression.errorCount, 0);
             lastExpressionCompleted.complete(true);
-          });
+          },
+        )
+      );
 
       compileResponseCompleter.complete(Future<List<int>>.value(utf8.encode(
-          'result abc\nline1\nline2\nabc /path/to/main.dart.dill 0\n'
+          'result abc\nline1\nline2\nabc\nabc /path/to/main.dart.dill 0\n'
       )));
 
       expect(await lastExpressionCompleted.future, isTrue);
@@ -496,9 +507,12 @@ example:org-dartlang-app:///lib/
   });
 }
 
-Future<void> _recompile(StreamController<List<int>> streamController,
-  ResidentCompiler generator, MockStdIn mockFrontendServerStdIn,
-  String mockCompilerOutput) async {
+Future<void> _recompile(
+  StreamController<List<int>> streamController,
+  ResidentCompiler generator,
+  MockStdIn mockFrontendServerStdIn,
+  String mockCompilerOutput,
+) async {
   // Put content into the output stream after generator.recompile gets
   // going few lines below, resets completer.
   scheduleMicrotask(() {
@@ -506,7 +520,7 @@ Future<void> _recompile(StreamController<List<int>> streamController,
   });
   final CompilerOutput output = await generator.recompile(
     null /* mainPath */,
-    <String>['/path/to/main.dart'],
+    <Uri>[Uri.parse('/path/to/main.dart')],
     outputPath: '/build/',
   );
   expect(output.outputFilename, equals('/path/to/main.dart.dill'));
@@ -518,9 +532,12 @@ Future<void> _recompile(StreamController<List<int>> streamController,
   mockFrontendServerStdIn._stdInWrites.clear();
 }
 
-Future<void> _accept(StreamController<List<int>> streamController,
-    ResidentCompiler generator, MockStdIn mockFrontendServerStdIn,
-    String expected) async {
+Future<void> _accept(
+  StreamController<List<int>> streamController,
+  ResidentCompiler generator,
+  MockStdIn mockFrontendServerStdIn,
+  String expected,
+) async {
   // Put content into the output stream after generator.recompile gets
   // going few lines below, resets completer.
   generator.accept();
@@ -530,9 +547,13 @@ Future<void> _accept(StreamController<List<int>> streamController,
   mockFrontendServerStdIn._stdInWrites.clear();
 }
 
-Future<void> _reject(StreamController<List<int>> streamController,
-    ResidentCompiler generator, MockStdIn mockFrontendServerStdIn,
-    String mockCompilerOutput, String expected) async {
+Future<void> _reject(
+  StreamController<List<int>> streamController,
+  ResidentCompiler generator,
+  MockStdIn mockFrontendServerStdIn,
+  String mockCompilerOutput,
+  String expected,
+) async {
   // Put content into the output stream after generator.recompile gets
   // going few lines below, resets completer.
   scheduleMicrotask(() {
@@ -559,12 +580,12 @@ class MockStdIn extends Mock implements IOSink {
   }
 
   @override
-  void write([Object o = '']) {
+  void write([ Object o = '' ]) {
     _stdInWrites.write(o);
   }
 
   @override
-  void writeln([Object o = '']) {
+  void writeln([ Object o = '' ]) {
     _stdInWrites.writeln(o);
   }
 }

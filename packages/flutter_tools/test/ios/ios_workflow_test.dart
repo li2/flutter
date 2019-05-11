@@ -187,6 +187,7 @@ Show information about a connected device.
   -x, --xml		output information as xml plist instead of key/value pairs
   -h, --help		prints usage information
         ''');
+        return null;
       });
       final IOSWorkflowTestTarget workflow = IOSWorkflowTestTarget();
       final ValidationResult result = await workflow.validate();
@@ -222,6 +223,22 @@ Show information about a connected device.
       when(xcode.eulaSigned).thenReturn(true);
       when(xcode.isSimctlInstalled).thenReturn(true);
       final IOSWorkflowTestTarget workflow = IOSWorkflowTestTarget(iosDeployVersionText: '1.8.0');
+      final ValidationResult result = await workflow.validate();
+      expect(result.type, ValidationType.partial);
+    }, overrides: <Type, Generator>{
+      IMobileDevice: () => iMobileDevice,
+      Xcode: () => xcode,
+      CocoaPods: () => cocoaPods,
+    });
+
+    testUsingContext('Emits partial status when ios-deploy version is a known bad version', () async {
+      when(xcode.isInstalled).thenReturn(true);
+      when(xcode.versionText)
+          .thenReturn('Xcode 8.2.1\nBuild version 8C1002\n');
+      when(xcode.isInstalledAndMeetsVersionCheck).thenReturn(true);
+      when(xcode.eulaSigned).thenReturn(true);
+      when(xcode.isSimctlInstalled).thenReturn(true);
+      final IOSWorkflowTestTarget workflow = IOSWorkflowTestTarget(iosDeployVersionText: '2.0.0');
       final ValidationResult result = await workflow.validate();
       expect(result.type, ValidationType.partial);
     }, overrides: <Type, Generator>{
@@ -386,7 +403,7 @@ class IOSWorkflowTestTarget extends IOSValidator {
 
 class CocoaPodsTestTarget extends CocoaPodsValidator {
   CocoaPodsTestTarget({
-    this.hasHomebrew = true
+    this.hasHomebrew = true,
   });
 
   @override

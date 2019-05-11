@@ -154,6 +154,16 @@ enum ShowValueIndicator {
 /// [RoundSliderTickMarkShape], [PaddleSliderValueIndicatorShape], and
 /// [RoundSliderOverlayShape] for examples.
 ///
+/// The track painting can be skipped by specifying 0 for [trackHeight].
+/// The thumb painting can be skipped by specifying
+/// [SliderComponentShape.noThumb] for [SliderThemeData.thumbShape].
+/// The overlay painting can be skipped by specifying
+/// [SliderComponentShape.noOverlay] for [SliderThemeData.overlayShape].
+/// The tick mark painting can be skipped by specifying
+/// [SliderTickMarkShape.noTickMark] for [SliderThemeData.tickMarkShape].
+/// The value indicator painting can be skipped by specifying the
+/// appropriate [ShowValueIndicator] for [SliderThemeData.showValueIndicator].
+///
 /// See also:
 ///
 ///  * [SliderTheme] widget, which can override the slider theme of its
@@ -200,46 +210,27 @@ class SliderThemeData extends Diagnosticable {
   /// ```
   /// {@end-tool}
   const SliderThemeData({
-    @required this.trackHeight,
-    @required this.activeTrackColor,
-    @required this.inactiveTrackColor,
-    @required this.disabledActiveTrackColor,
-    @required this.disabledInactiveTrackColor,
-    @required this.activeTickMarkColor,
-    @required this.inactiveTickMarkColor,
-    @required this.disabledActiveTickMarkColor,
-    @required this.disabledInactiveTickMarkColor,
-    @required this.thumbColor,
-    @required this.disabledThumbColor,
-    @required this.overlayColor,
-    @required this.valueIndicatorColor,
-    @required this.trackShape,
-    @required this.tickMarkShape,
-    @required this.thumbShape,
-    @required this.overlayShape,
-    @required this.valueIndicatorShape,
-    @required this.showValueIndicator,
-    @required this.valueIndicatorTextStyle,
-  })  : assert(trackHeight != null),
-        assert(activeTrackColor != null),
-        assert(inactiveTrackColor != null),
-        assert(disabledActiveTrackColor != null),
-        assert(disabledInactiveTrackColor != null),
-        assert(activeTickMarkColor != null),
-        assert(inactiveTickMarkColor != null),
-        assert(disabledActiveTickMarkColor != null),
-        assert(disabledInactiveTickMarkColor != null),
-        assert(thumbColor != null),
-        assert(disabledThumbColor != null),
-        assert(overlayColor != null),
-        assert(valueIndicatorColor != null),
-        assert(trackShape != null),
-        assert(tickMarkShape != null),
-        assert(thumbShape != null),
-        assert(overlayShape != null),
-        assert(valueIndicatorShape != null),
-        assert(valueIndicatorTextStyle != null),
-        assert(showValueIndicator != null);
+    this.trackHeight,
+    this.activeTrackColor,
+    this.inactiveTrackColor,
+    this.disabledActiveTrackColor,
+    this.disabledInactiveTrackColor,
+    this.activeTickMarkColor,
+    this.inactiveTickMarkColor,
+    this.disabledActiveTickMarkColor,
+    this.disabledInactiveTickMarkColor,
+    this.thumbColor,
+    this.disabledThumbColor,
+    this.overlayColor,
+    this.valueIndicatorColor,
+    this.trackShape,
+    this.tickMarkShape,
+    this.thumbShape,
+    this.overlayShape,
+    this.valueIndicatorShape,
+    this.showValueIndicator,
+    this.valueIndicatorTextStyle,
+  });
 
   /// Generates a SliderThemeData from three main colors.
   ///
@@ -273,14 +264,8 @@ class SliderThemeData extends Diagnosticable {
     const int disabledInactiveTickMarkAlpha = 0x1f; // 12% opacity
     const int thumbAlpha = 0xff;
     const int disabledThumbAlpha = 0x52; // 32% opacity
+    const int overlayAlpha = 0x1f; // 12% opacity
     const int valueIndicatorAlpha = 0xff;
-
-    // TODO(gspencer): We don't really follow the spec here for overlays.
-    // The spec says to use 16% opacity for drawing over light material,
-    // and 32% for colored material, but we don't really have a way to
-    // know what the underlying color is, so there's no easy way to
-    // implement this. Choosing the "light" version for now.
-    const int overlayLightAlpha = 0x29; // 16% opacity
 
     return SliderThemeData(
       trackHeight: 2.0,
@@ -294,9 +279,9 @@ class SliderThemeData extends Diagnosticable {
       disabledInactiveTickMarkColor: primaryColorDark.withAlpha(disabledInactiveTickMarkAlpha),
       thumbColor: primaryColor.withAlpha(thumbAlpha),
       disabledThumbColor: primaryColorDark.withAlpha(disabledThumbAlpha),
-      overlayColor: primaryColor.withAlpha(overlayLightAlpha),
+      overlayColor: primaryColor.withAlpha(overlayAlpha),
       valueIndicatorColor: primaryColor.withAlpha(valueIndicatorAlpha),
-      trackShape: const RectangularSliderTrackShape(),
+      trackShape: const RoundedRectSliderTrackShape(),
       tickMarkShape: const RoundSliderTickMarkShape(),
       thumbShape: const RoundSliderThumbShape(),
       overlayShape: const RoundSliderOverlayShape(),
@@ -359,7 +344,7 @@ class SliderThemeData extends Diagnosticable {
 
   /// The shape that will be used to draw the [Slider]'s track.
   ///
-  /// The [SliderTrackShape.getPreferredRect] method is used to to map
+  /// The [SliderTrackShape.getPreferredRect] method is used to map
   /// slider-relative gesture coordinates to the correct thumb position on the
   /// track. It is also used to horizontally position tick marks, when he slider
   /// is discrete.
@@ -625,7 +610,7 @@ class SliderThemeData extends Diagnosticable {
 ///
 /// See also:
 ///
-///  * [RectangularSliderTrackShape], which is the the default track shape.
+///  * [RectangularSliderTrackShape], which is the default track shape.
 ///  * [SliderTickMarkShape], which is the default tick mark shape.
 ///  * [SliderComponentShape], which is the base class for custom a component
 ///    shape.
@@ -706,6 +691,9 @@ abstract class SliderTrackShape {
 /// This is a simplified version of [SliderComponentShape] with a
 /// [SliderThemeData] passed when getting the preferred size.
 ///
+/// The tick mark painting can be skipped by specifying [noTickMark] for
+/// [SliderThemeData.tickMarkShape].
+///
 /// See also:
 ///
 ///  * [RoundSliderTickMarkShape] for a simple example of a tick mark shape.
@@ -759,6 +747,45 @@ abstract class SliderTickMarkShape {
     bool isEnabled,
     TextDirection textDirection,
   });
+
+  /// Special instance of [SliderTickMarkShape] to skip the tick mark painting.
+  ///
+  /// See also:
+  ///
+  /// * [SliderThemeData.tickMarkShape], which is the shape that the [Slider]
+  /// uses when painting tick marks.
+  static final SliderTickMarkShape noTickMark = _EmptySliderTickMarkShape();
+}
+
+/// A special version of [SliderTickMarkShape] that has a zero size and paints
+/// nothing.
+///
+/// This class is used to create a special instance of a [SliderTickMarkShape]
+/// that will not paint any tick mark shape. A static reference is stored in
+/// [SliderTickMarkShape.noTickMark]. When this value  is specified for
+/// [SliderThemeData.tickMarkShape], the tick mark painting is skipped.
+class _EmptySliderTickMarkShape extends SliderTickMarkShape {
+  @override
+  Size getPreferredSize({
+    SliderThemeData sliderTheme,
+    bool isEnabled,
+  }) {
+    return Size.zero;
+  }
+
+  @override
+  void paint(
+    PaintingContext context,
+    Offset center, {
+    RenderBox parentBox,
+    SliderThemeData sliderTheme,
+    Animation<double> enableAnimation,
+    Offset thumbCenter,
+    bool isEnabled,
+    TextDirection textDirection,
+  }) {
+    // no-op.
+  }
 }
 
 /// Base class for slider thumb, thumb overlay, and value indicator shapes.
@@ -767,6 +794,12 @@ abstract class SliderTickMarkShape {
 ///
 /// All shapes are painted to the same canvas and ordering is important.
 /// The overlay is painted first, then the value indicator, then the thumb.
+///
+/// The thumb painting can be skipped by specifying [noThumb] for
+/// [SliderThemeData.thumbShape].
+///
+/// The overlay painting can be skipped by specifying [noOverlay] for
+/// [SliderThemeData.overlayShape].
 ///
 /// See also:
 ///
@@ -821,43 +854,86 @@ abstract class SliderComponentShape {
     TextDirection textDirection,
     double value,
   });
+
+  /// Special instance of [SliderComponentShape] to skip the thumb drawing.
+  ///
+  /// See also:
+  ///
+  /// * [SliderThemeData.thumbShape], which is the shape that the [Slider]
+  /// uses when painting the thumb.
+  static final SliderComponentShape noThumb = _EmptySliderComponentShape();
+
+  /// Special instance of [SliderComponentShape] to skip the overlay drawing.
+  ///
+  /// See also:
+  ///
+  /// * [SliderThemeData.overlayShape], which is the shape that the [Slider]
+  /// uses when painting the overlay.
+  static final SliderComponentShape noOverlay = _EmptySliderComponentShape();
 }
 
-// The following shapes are the material defaults.
-
-/// This is the default shape of a [Slider]'s track.
+/// A special version of [SliderComponentShape] that has a zero size and paints
+/// nothing.
 ///
-/// It paints a solid colored rectangle, vertically centered in the
-/// [parentBox]. The track rectangle extends to the bounds of the [parentBox],
-/// but is padded by the [RoundSliderOverlayShape] radius. The height is defined
-/// by the [SliderThemeData.trackHeight]. The color is determined by the
-/// [Slider]'s enabled state and the track piece's active state which are
-/// defined by:
-///   [SliderThemeData.activeTrackColor],
-///   [SliderThemeData.inactiveTrackColor],
-///   [SliderThemeData.disabledActiveTrackColor],
-///   [SliderThemeData.disabledInactiveTrackColor].
+/// This class is used to create a special instance of a [SliderComponentShape]
+/// that will not paint any component shape. A static reference is stored in
+/// [SliderTickMarkShape.noThumb] and [SliderTickMarkShape.noOverlay]. When this value
+/// is specified for [SliderThemeData.thumbShape], the thumb painting is
+/// skipped.  When this value is specified for [SliderThemeData.overlaySHape],
+/// the overlay painting is skipped.
+class _EmptySliderComponentShape extends SliderComponentShape {
+  @override
+  Size getPreferredSize(bool isEnabled, bool isDiscrete) => Size.zero;
+
+  @override
+  void paint(
+    PaintingContext context,
+    Offset center, {
+    Animation<double> activationAnimation,
+    Animation<double> enableAnimation,
+    bool isDiscrete,
+    TextPainter labelPainter,
+    RenderBox parentBox,
+    SliderThemeData sliderTheme,
+    TextDirection textDirection,
+    double value,
+  }) {
+    // no-op.
+  }
+}
+
+/// Base track shape that provides an implementation of [getPreferredRect] for
+/// default sizing.
 ///
 /// See also:
 ///
-///  * [Slider] for the component that this is meant to display this shape.
-///  * [SliderThemeData] where an instance of this class is set to inform the
-///    slider of the visual details of the its track.
-///  * [SliderTrackShape] Base component for creating other custom track
-///    shapes.
-class RectangularSliderTrackShape extends SliderTrackShape {
-  /// Abstract const constructor. This constructor enables subclasses to provide
-  /// const constructors so that they can be used in const expressions.
-  const RectangularSliderTrackShape();
-
-  @override
+/// * [RectangularSliderTrackShape], which is a track shape with sharp
+/// rectangular edges
+/// * [RoundedRectSliderTrackShape], which is a track shape with round
+/// stadium-like edges.
+///
+/// The height is set from [SliderThemeData.trackHeight] and the width of the
+/// parent box less the larger of the widths of [SliderThemeData.thumbShape] and
+/// [SliderThemeData.overlayShape].
+abstract class BaseSliderTrackShape {
+  /// Returns a rect that represents the track bounds that fits within the
+  /// [Slider].
+  ///
+  /// The width is the width of the [Slider], but padded by the max
+  /// of the overlay and thumb radius. The height is defined by the
+  /// [SliderThemeData.trackHeight].
+  ///
+  /// The [Rect] is centered both horizontally and vertically within the slider
+  /// bounds.
   Rect getPreferredRect({
-    RenderBox parentBox,
+    @required RenderBox parentBox,
     Offset offset = Offset.zero,
     SliderThemeData sliderTheme,
-    bool isEnabled,
-    bool isDiscrete,
+    bool isEnabled = false,
+    bool isDiscrete = false,
   }) {
+    assert(parentBox != null);
+    final double thumbWidth = sliderTheme.thumbShape.getPreferredSize(isEnabled, isDiscrete).width;
     final double overlayWidth = sliderTheme.overlayShape.getPreferredSize(isEnabled, isDiscrete).width;
     final double trackHeight = sliderTheme.trackHeight;
     assert(overlayWidth >= 0);
@@ -867,28 +943,186 @@ class RectangularSliderTrackShape extends SliderTrackShape {
 
     final double trackLeft = offset.dx + overlayWidth / 2;
     final double trackTop = offset.dy + (parentBox.size.height - trackHeight) / 2;
-    // TODO(clocksmith): Although this works for a material, perhaps the default
-    // rectangular track should be padded not just by the overlay, but by the
-    // max of the thumb and the overlay, in case there is no overlay.
-    final double trackWidth = parentBox.size.width - overlayWidth;
+    final double trackWidth = parentBox.size.width - math.max(thumbWidth, overlayWidth);
     return Rect.fromLTWH(trackLeft, trackTop, trackWidth, trackHeight);
   }
+}
 
-  // Spacing for disabled slider state.
-  static const double _thumbGap = 2.0;
+/// This is the default shape of a [Slider]'s track.
+///
+/// It paints a solid colored rectangle with rounded edges, vertically centered
+/// in the [parentBox]. The track rectangle extends to the bounds of the
+/// [parentBox], but is padded by the larger of [RoundSliderOverlayShape]'s
+/// radius and [RoundSliderThumbShape]'s radius. The height is defined by the
+/// [SliderThemeData.trackHeight]. The color is determined by the [Slider]'s
+/// enabled state and the track segment's active state which are defined by:
+///   [SliderThemeData.activeTrackColor],
+///   [SliderThemeData.inactiveTrackColor],
+///   [SliderThemeData.disabledActiveTrackColor],
+///   [SliderThemeData.disabledInactiveTrackColor].
+///
+/// See also:
+///
+///  * [Slider], for the component that is meant to display this shape.
+///  * [SliderThemeData], where an instance of this class is set to inform the
+///    slider of the visual details of the its track.
+///  * [SliderTrackShape], which is the base component for creating other
+///    custom track shapes.
+///  * [RectangularSliderTrackShape], for a similar track with sharp edges.
+class RoundedRectSliderTrackShape extends SliderTrackShape with BaseSliderTrackShape {
+  /// Create a slider track that draws two rectangles with rounded outer edges.
+  const RoundedRectSliderTrackShape();
 
   @override
   void paint(
     PaintingContext context,
     Offset offset, {
-    RenderBox parentBox,
-    SliderThemeData sliderTheme,
-    Animation<double> enableAnimation,
-    TextDirection textDirection,
-    Offset thumbCenter,
-    bool isDiscrete,
-    bool isEnabled,
+    @required RenderBox parentBox,
+    @required SliderThemeData sliderTheme,
+    @required Animation<double> enableAnimation,
+    @required TextDirection textDirection,
+    @required Offset thumbCenter,
+    bool isDiscrete = false,
+    bool isEnabled = false,
   }) {
+    assert(context != null);
+    assert(offset != null);
+    assert(parentBox != null);
+    assert(sliderTheme != null);
+    assert(enableAnimation != null);
+    assert(textDirection != null);
+    assert(thumbCenter != null);
+    // If the slider track height is less than or equal to 0, then it makes no
+    // difference whether the track is painted or not, therefore the painting
+    // can be a no-op.
+    if (sliderTheme.trackHeight <= 0) {
+      return;
+    }
+
+    // Assign the track segment paints, which are leading: active and
+    // trailing: inactive.
+    final ColorTween activeTrackColorTween = ColorTween(begin: sliderTheme.disabledActiveTrackColor, end: sliderTheme.activeTrackColor);
+    final ColorTween inactiveTrackColorTween = ColorTween(begin: sliderTheme.disabledInactiveTrackColor, end: sliderTheme.inactiveTrackColor);
+    final Paint activePaint = Paint()..color = activeTrackColorTween.evaluate(enableAnimation);
+    final Paint inactivePaint = Paint()..color = inactiveTrackColorTween.evaluate(enableAnimation);
+    Paint leftTrackPaint;
+    Paint rightTrackPaint;
+    switch (textDirection) {
+      case TextDirection.ltr:
+        leftTrackPaint = activePaint;
+        rightTrackPaint = inactivePaint;
+        break;
+      case TextDirection.rtl:
+        leftTrackPaint = inactivePaint;
+        rightTrackPaint = activePaint;
+        break;
+    }
+
+    final Rect trackRect = getPreferredRect(
+      parentBox: parentBox,
+      offset: offset,
+      sliderTheme: sliderTheme,
+      isEnabled: isEnabled,
+      isDiscrete: isDiscrete,
+    );
+
+    // The arc rects create a semi-circle with radius equal to track height.
+    final Rect leftTrackArcRect = Rect.fromLTWH(trackRect.left, trackRect.top, trackRect.height, trackRect.height);
+    context.canvas.drawArc(leftTrackArcRect, math.pi / 2, math.pi, false, leftTrackPaint);
+    final Rect rightTrackArcRect = Rect.fromLTWH(trackRect.right - trackRect.height / 2, trackRect.top, trackRect.height, trackRect.height);
+    context.canvas.drawArc(rightTrackArcRect, -math.pi / 2, math.pi, false, rightTrackPaint);
+
+    final Size thumbSize = sliderTheme.thumbShape.getPreferredSize(isEnabled, isDiscrete);
+    final Rect leftTrackSegment = Rect.fromLTRB(trackRect.left + trackRect.height / 2, trackRect.top, thumbCenter.dx - thumbSize.width / 2, trackRect.bottom);
+    context.canvas.drawRect(leftTrackSegment, leftTrackPaint);
+    final Rect rightTrackSegment = Rect.fromLTRB(thumbCenter.dx + thumbSize.width / 2, trackRect.top, trackRect.right, trackRect.bottom);
+    context.canvas.drawRect(rightTrackSegment, rightTrackPaint);
+  }
+}
+
+/// A [Slider] track that's a simple rectangle.
+///
+/// It paints a solid colored rectangle, vertically centered in the
+/// [parentBox]. The track rectangle extends to the bounds of the [parentBox],
+/// but is padded by the [RoundSliderOverlayShape] radius. The height is defined
+/// by the [SliderThemeData.trackHeight]. The color is determined by the
+/// [Slider]'s enabled state and the track segments's active state which are
+/// defined by:
+///   [SliderThemeData.activeTrackColor],
+///   [SliderThemeData.inactiveTrackColor],
+///   [SliderThemeData.disabledActiveTrackColor],
+///   [SliderThemeData.disabledInactiveTrackColor].
+///
+/// See also:
+///
+///  * [Slider], for the component that is meant to display this shape.
+///  * [SliderThemeData], where an instance of this class is set to inform the
+///    slider of the visual details of the its track.
+///  * [SliderTrackShape], which is the base component for creating other
+///     custom track shapes.
+///  * [RoundedRectSliderTrackShape], for a similar track with rounded edges.
+class RectangularSliderTrackShape extends SliderTrackShape {
+  /// Create a slider track that draws 2 rectangles.
+  const RectangularSliderTrackShape({ this.disabledThumbGapWidth = 2.0 });
+
+  /// Horizontal spacing, or gap, between the disabled thumb and the track.
+  ///
+  /// This is only used when the slider is disabled. There is no gap around
+  /// the thumb and any part of the track when the slider is enabled. The
+  /// Material spec defaults this gap width 2, which is half of the disabled
+  /// thumb radius.
+  final double disabledThumbGapWidth;
+
+  @override
+  Rect getPreferredRect({
+    @required RenderBox parentBox,
+    Offset offset = Offset.zero,
+    @required SliderThemeData sliderTheme,
+    bool isEnabled = false,
+    bool isDiscrete = false,
+  }) {
+    assert(parentBox != null);
+    assert(sliderTheme != null);
+    final double thumbWidth = sliderTheme.thumbShape.getPreferredSize(isEnabled, isDiscrete).width;
+    final double overlayWidth = sliderTheme.overlayShape.getPreferredSize(isEnabled, isDiscrete).width;
+    final double trackHeight = sliderTheme.trackHeight;
+    assert(overlayWidth >= 0);
+    assert(trackHeight >= 0);
+    assert(parentBox.size.width >= overlayWidth);
+    assert(parentBox.size.height >= trackHeight);
+
+    final double trackLeft = offset.dx + overlayWidth / 2;
+    final double trackTop = offset.dy + (parentBox.size.height - trackHeight) / 2;
+    final double trackWidth = parentBox.size.width - math.max(thumbWidth, overlayWidth);
+    return Rect.fromLTWH(trackLeft, trackTop, trackWidth, trackHeight);
+  }
+
+  @override
+  void paint(
+    PaintingContext context,
+    Offset offset, {
+    @required RenderBox parentBox,
+    @required SliderThemeData sliderTheme,
+    @required Animation<double> enableAnimation,
+    @required TextDirection textDirection,
+    @required Offset thumbCenter,
+    bool isDiscrete = false,
+    bool isEnabled = false,
+  }) {
+    assert(context != null);
+    assert(offset != null);
+    assert(parentBox != null);
+    assert(sliderTheme != null);
+    assert(enableAnimation != null);
+    assert(textDirection != null);
+    assert(thumbCenter != null);
+    // If the slider track height is less than or equal to 0, then it makes no
+    // difference whether the track is painted or not, therefore the painting
+    // can be a no-op.
+    if (sliderTheme.trackHeight <= 0) {
+      return;
+    }
+
     // Assign the track segment paints, which are left: active, right: inactive,
     // but reversed for right to left text.
     final ColorTween activeTrackColorTween = ColorTween(begin: sliderTheme.disabledActiveTrackColor , end: sliderTheme.activeTrackColor);
@@ -908,24 +1142,18 @@ class RectangularSliderTrackShape extends SliderTrackShape {
         break;
     }
 
-    // Used to create a gap around the thumb iff the slider is disabled.
-    double horizontalAdjustment = 0.0;
-    if (!isEnabled) {
-      final double thumbRadius = sliderTheme.thumbShape.getPreferredSize(isEnabled, isDiscrete).width / 2.0;
-      final double gap = _thumbGap * (1.0 - enableAnimation.value);
-      horizontalAdjustment = thumbRadius + gap;
-    }
-
     final Rect trackRect = getPreferredRect(
-        parentBox: parentBox,
-        offset: offset,
-        sliderTheme: sliderTheme,
-        isEnabled: isEnabled,
-        isDiscrete: isDiscrete
+      parentBox: parentBox,
+      offset: offset,
+      sliderTheme: sliderTheme,
+      isEnabled: isEnabled,
+      isDiscrete: isDiscrete,
     );
-    final Rect leftTrackSegment = Rect.fromLTRB(trackRect.left, trackRect.top, thumbCenter.dx - horizontalAdjustment, trackRect.bottom);
+
+    final Size thumbSize = sliderTheme.thumbShape.getPreferredSize(isEnabled, isDiscrete);
+    final Rect leftTrackSegment = Rect.fromLTRB(trackRect.left + trackRect.height / 2, trackRect.top, thumbCenter.dx - thumbSize.width / 2, trackRect.bottom);
     context.canvas.drawRect(leftTrackSegment, leftTrackPaint);
-    final Rect rightTrackSegment = Rect.fromLTRB(thumbCenter.dx + horizontalAdjustment, trackRect.top, trackRect.right, trackRect.bottom);
+    final Rect rightTrackSegment = Rect.fromLTRB(thumbCenter.dx + thumbSize.width / 2, trackRect.top, trackRect.right, trackRect.bottom);
     context.canvas.drawRect(rightTrackSegment, rightTrackPaint);
   }
 }
@@ -949,29 +1177,42 @@ class RectangularSliderTrackShape extends SliderTrackShape {
 ///  * [SliderTheme], which can be used to configure the tick mark shape of all
 ///    sliders in a widget subtree.
 class RoundSliderTickMarkShape extends SliderTickMarkShape {
-  /// Abstract const constructor. This constructor enables subclasses to provide
-  /// const constructors so that they can be used in const expressions.
-  const RoundSliderTickMarkShape();
+  /// Create a slider tick mark that draws a circle.
+  const RoundSliderTickMarkShape({ this.tickMarkRadius });
+
+  /// The preferred radius of the round tick mark.
+  ///
+  /// If it is not provided, then half of the track height is used.
+  final double tickMarkRadius;
 
   @override
   Size getPreferredSize({
     bool isEnabled,
     SliderThemeData sliderTheme,
   }) {
-    return Size.fromRadius(sliderTheme.trackHeight / 2);
+    // The tick marks are tiny circles. If no radius is provided, then they are
+    // defaulted to be the same height as the track.
+    return Size.fromRadius(tickMarkRadius ?? sliderTheme.trackHeight / 2);
   }
 
   @override
   void paint(
     PaintingContext context,
     Offset center, {
-    RenderBox parentBox,
-    SliderThemeData sliderTheme,
-    Animation<double> enableAnimation,
-    TextDirection textDirection,
-    Offset thumbCenter,
-    bool isEnabled,
+    @required RenderBox parentBox,
+    @required SliderThemeData sliderTheme,
+    @required Animation<double> enableAnimation,
+    @required TextDirection textDirection,
+    @required Offset thumbCenter,
+    bool isEnabled = false,
   }) {
+    assert(context != null);
+    assert(center != null);
+    assert(parentBox != null);
+    assert(sliderTheme != null);
+    assert(enableAnimation != null);
+    assert(textDirection != null);
+    assert(thumbCenter != null);
     // The paint color of the tick mark depends on its position relative
     // to the thumb and the text direction.
     Color begin;
@@ -991,7 +1232,10 @@ class RoundSliderTickMarkShape extends SliderTickMarkShape {
     final Paint paint = Paint()..color = ColorTween(begin: begin, end: end).evaluate(enableAnimation);
 
     // The tick marks are tiny circles that are the same height as the track.
-    final double tickMarkRadius = sliderTheme.trackHeight / 2;
+    final double tickMarkRadius = getPreferredSize(
+      isEnabled: isEnabled,
+      sliderTheme: sliderTheme,
+    ).width / 2;
     context.canvas.drawCircle(center, tickMarkRadius, paint);
   }
 }
@@ -1005,33 +1249,54 @@ class RoundSliderTickMarkShape extends SliderTickMarkShape {
 ///    sliders in a widget subtree.
 class RoundSliderThumbShape extends SliderComponentShape {
   /// Create a slider thumb that draws a circle.
-  const RoundSliderThumbShape();
+  const RoundSliderThumbShape({
+    this.enabledThumbRadius = 10.0,
+    this.disabledThumbRadius,
+  });
 
-  static const double _thumbRadius = 6.0;
-  static const double _disabledThumbRadius = 4.0;
+  /// The preferred radius of the round thumb shape when the slider is enabled.
+  ///
+  /// If it is not provided, then the material default of 10 is used.
+  final double enabledThumbRadius;
+
+  /// The preferred radius of the round thumb shape when the slider is disabled.
+  ///
+  /// If no disabledRadius is provided, then it is equal to the
+  /// [enabledThumbRadius]
+  final double disabledThumbRadius;
+  double get _disabledThumbRadius =>  disabledThumbRadius ?? enabledThumbRadius;
 
   @override
   Size getPreferredSize(bool isEnabled, bool isDiscrete) {
-    return Size.fromRadius(isEnabled ? _thumbRadius : _disabledThumbRadius);
+    return Size.fromRadius(isEnabled ? enabledThumbRadius : _disabledThumbRadius);
   }
 
   @override
   void paint(
     PaintingContext context,
     Offset center, {
-    Animation<double> activationAnimation,
-    Animation<double> enableAnimation,
-    bool isDiscrete,
-    TextPainter labelPainter,
-    RenderBox parentBox,
-    SliderThemeData sliderTheme,
-    TextDirection textDirection,
-    double value,
+    @required Animation<double> activationAnimation,
+    @required Animation<double> enableAnimation,
+    bool isDiscrete = false,
+    @required TextPainter labelPainter,
+    @required RenderBox parentBox,
+    @required SliderThemeData sliderTheme,
+    @required TextDirection textDirection,
+    @required double value,
   }) {
+    assert(context != null);
+    assert(center != null);
+    assert(activationAnimation != null);
+    assert(enableAnimation != null);
+    assert(labelPainter != null);
+    assert(parentBox != null);
+    assert(sliderTheme != null);
+    assert(textDirection != null);
+    assert(value != null);
     final Canvas canvas = context.canvas;
     final Tween<double> radiusTween = Tween<double>(
       begin: _disabledThumbRadius,
-      end: _thumbRadius,
+      end: enabledThumbRadius,
     );
     final ColorTween colorTween = ColorTween(
       begin: sliderTheme.disabledThumbColor,
@@ -1062,39 +1327,46 @@ class RoundSliderThumbShape extends SliderComponentShape {
 ///    sliders in a widget subtree.
 class RoundSliderOverlayShape extends SliderComponentShape {
   /// Create a slider thumb overlay that draws a circle.
-  const RoundSliderOverlayShape();
+  const RoundSliderOverlayShape({ this.overlayRadius = 24.0 });
 
-  static const double _overlayRadius = 16.0;
+  /// The preferred radius of the round thumb shape when enabled.
+  ///
+  /// If it is not provided, then half of the track height is used.
+  final double overlayRadius;
 
   @override
   Size getPreferredSize(bool isEnabled, bool isDiscrete) {
-    return const Size.fromRadius(_overlayRadius);
+    return Size.fromRadius(overlayRadius);
   }
 
   @override
   void paint(
     PaintingContext context,
     Offset center, {
-    Animation<double> activationAnimation,
-    Animation<double> enableAnimation,
-    bool isDiscrete,
-    TextPainter labelPainter,
-    RenderBox parentBox,
-    SliderThemeData sliderTheme,
-    TextDirection textDirection,
-    double value,
+    @required Animation<double> activationAnimation,
+    @required Animation<double> enableAnimation,
+    bool isDiscrete = false,
+    @required TextPainter labelPainter,
+    @required RenderBox parentBox,
+    @required SliderThemeData sliderTheme,
+    @required TextDirection textDirection,
+    @required double value,
   }) {
+    assert(context != null);
+    assert(center != null);
+    assert(activationAnimation != null);
+    assert(enableAnimation != null);
+    assert(labelPainter != null);
+    assert(parentBox != null);
+    assert(sliderTheme != null);
+    assert(textDirection != null);
+    assert(value != null);
     final Canvas canvas = context.canvas;
     final Tween<double> radiusTween = Tween<double>(
       begin: 0.0,
-      end: _overlayRadius,
+      end: overlayRadius,
     );
 
-    // TODO(gspencer): We don't really follow the spec here for overlays.
-    // The spec says to use 16% opacity for drawing over light material,
-    // and 32% for colored material, but we don't really have a way to
-    // know what the underlying color is, so there's no easy way to
-    // implement this. Choosing the "light" version for now.
     canvas.drawCircle(
       center,
       radiusTween.evaluate(activationAnimation),
@@ -1176,7 +1448,7 @@ class PaddleSliderValueIndicatorShape extends SliderComponentShape {
     final Path path = Path();
     final Offset bottomKnobStart = Offset(
       _bottomLobeRadius * math.cos(_bottomLobeStartAngle),
-      _bottomLobeRadius * math.sin(_bottomLobeStartAngle),
+      _bottomLobeRadius * math.sin(_bottomLobeStartAngle) - 2,
     );
     final Offset bottomNeckRightCenter = bottomKnobStart +
         Offset(
@@ -1326,7 +1598,7 @@ class PaddleSliderValueIndicatorShape extends SliderComponentShape {
     // The distance between the end of the bottom neck arc and the beginning of
     // the top neck arc. We use this to shrink/expand it based on the scale
     // factor of the value indicator.
-    final double neckStretchBaseline = bottomLobeEnd.dy - math.max(neckLeftCenter.dy, neckRightCenter.dy);
+    final double neckStretchBaseline = math.max(0.0, bottomLobeEnd.dy - math.max(neckLeftCenter.dy, neckRightCenter.dy));
     final double t = math.pow(inverseTextScale, 3.0);
     final double stretch = (neckStretchBaseline * t).clamp(0.0, 10.0 * neckStretchBaseline);
     final Offset neckStretch = Offset(0.0, neckStretchBaseline - stretch);
@@ -1392,15 +1664,24 @@ class PaddleSliderValueIndicatorShape extends SliderComponentShape {
   void paint(
     PaintingContext context,
     Offset center, {
-    Animation<double> activationAnimation,
-    Animation<double> enableAnimation,
-    bool isDiscrete,
-    TextPainter labelPainter,
-    RenderBox parentBox,
-    SliderThemeData sliderTheme,
-    TextDirection textDirection,
-    double value,
+    @required Animation<double> activationAnimation,
+    @required Animation<double> enableAnimation,
+    bool isDiscrete = false,
+    @required TextPainter labelPainter,
+    @required RenderBox parentBox,
+    @required SliderThemeData sliderTheme,
+    @required TextDirection textDirection,
+    @required double value,
   }) {
+    assert(context != null);
+    assert(center != null);
+    assert(activationAnimation != null);
+    assert(enableAnimation != null);
+    assert(labelPainter != null);
+    assert(parentBox != null);
+    assert(sliderTheme != null);
+    assert(textDirection != null);
+    assert(value != null);
     final ColorTween enableColor = ColorTween(
       begin: sliderTheme.disabledThumbColor,
       end: sliderTheme.valueIndicatorColor,
