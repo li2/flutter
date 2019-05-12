@@ -5,6 +5,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_gallery/weiyi/studio/charts_demo.dart';
 import 'package:flutter_gallery/weiyi/studio/form_validation_demo.dart';
+import 'package:flutter_gallery/weiyi/studio/google_sign_in_demo.dart';
 
 import '../demo/all.dart';
 import 'icons.dart';
@@ -142,6 +143,14 @@ List<GalleryDemo> _buildGalleryDemos() {
       category: _kDemos,
       routeName: FormValidationDemo.routeName,
       buildRoute: (BuildContext context) => const FormValidationDemo()
+    ),
+    GalleryDemo(
+      title: 'Google Sign In',
+      subtitle: '',
+      icon: Icons.person,
+      category: _kDemos,
+      routeName: GoogleSignInDemo.routeName,
+      buildRoute: (BuildContext context) => const GoogleSignInDemo()
     ),
 
     // Style
