@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_gallery/weiyi/studio/charts_demo.dart';
 import 'package:flutter_gallery/weiyi/studio/form_validation_demo.dart';
 import 'package:flutter_gallery/weiyi/studio/google_sign_in_demo.dart';
+import 'package:flutter_gallery/weiyi/studio/firebase_auth/firebase_auth_demo.dart';
 
 import '../demo/all.dart';
 import 'icons.dart';
@@ -130,7 +131,7 @@ List<GalleryDemo> _buildGalleryDemos() {
     // Weiyi
     GalleryDemo(
       title: 'Charts',
-      subtitle: 'Material Design data visualization library',
+      subtitle: 'A plugin for material design data visualization',
       icon: Icons.show_chart,
       category: _kDemos,
       routeName: ChartDemo.routeName,
@@ -145,8 +146,16 @@ List<GalleryDemo> _buildGalleryDemos() {
       buildRoute: (BuildContext context) => const FormValidationDemo()
     ),
     GalleryDemo(
+        title: 'Firebase Auth',
+        subtitle: 'A plugin for Firebase oAuth, which support sign in with email, phone, Google auth, Facebook/GitHub/Twitter auth(NO UI), ect',
+        icon: Icons.person,
+        category: _kDemos,
+        routeName: FirebaseAuthDemo.routeName,
+        buildRoute: (BuildContext context) => const FirebaseAuthDemo()
+    ),
+    GalleryDemo(
       title: 'Google Sign In',
-      subtitle: '',
+      subtitle: 'A plugin for Google sign in oAuth with UI',
       icon: Icons.person,
       category: _kDemos,
       routeName: GoogleSignInDemo.routeName,
